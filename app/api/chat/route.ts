@@ -4,9 +4,26 @@ import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
+// Define message interface for conversation history
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
+}
+
+// Define OpenAI message interface with system role
+interface OpenAIMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
 export async function POST(req: Request) {
   try {
-    const { prompt, mode } = await req.json()
+    const { prompt, mode, conversationHistory = [] } = await req.json() as {
+      prompt: string;
+      mode: string;
+      conversationHistory: Message[];
+    }
 
     // Different system prompts based on the mode
     const systemPrompts = {
@@ -49,11 +66,30 @@ export async function POST(req: Request) {
     // Select the appropriate system prompt based on mode
     const systemPrompt = systemPrompts[mode as keyof typeof systemPrompts] || systemPrompts.default
 
+    // Convert conversation history to messages format for OpenAI
+    const messages: OpenAIMessage[] = conversationHistory.map(msg => ({
+      role: msg.role,
+      content: msg.content,
+    }));
+
+    // Add system message at the beginning
+    messages.unshift({
+      role: "system",
+      content: systemPrompt,
+    });
+
+    // If no history or only system message, add the current prompt
+    if (messages.length <= 1) {
+      messages.push({
+        role: "user",
+        content: prompt,
+      });
+    }
+
     // Stream the response from OpenAI
     const result = streamText({
       model: openai("gpt-4o"),
-      system: systemPrompt,
-      prompt,
+      messages,
       temperature: 0.9, // Higher temperature for more creative responses
       maxTokens: 250, // Keep responses relatively short
     })

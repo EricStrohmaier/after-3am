@@ -30,11 +30,21 @@ const RANDOM_PROMPTS = [
   "If you could speak to your house when no one else is home, what would you ask it?",
 ];
 
+// Define message interface for conversation history
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
+}
+
 interface QuestionInputProps {
   mode: string;
   setQuestion: (question: string) => void;
   setResponse: (response: string) => void;
   setIsTyping: (isTyping: boolean) => void;
+  conversationHistory: Message[];
+  setConversationHistory: (history: Message[]) => void;
+  isCentered?: boolean;
 }
 
 export default function QuestionInput({
@@ -42,6 +52,9 @@ export default function QuestionInput({
   setQuestion,
   setResponse,
   setIsTyping,
+  conversationHistory,
+  setConversationHistory,
+  isCentered = false,
 }: QuestionInputProps) {
   const [input, setInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,7 +107,17 @@ export default function QuestionInput({
     // Store the question
     const userQuestion = input;
     setQuestion(userQuestion);
-    localStorage.setItem("lastQuestion", userQuestion);
+
+    // Add the user message to conversation history
+    const userMessage: Message = {
+      role: "user",
+      content: userQuestion,
+      timestamp: Date.now(),
+    };
+
+    const updatedHistory = [...conversationHistory, userMessage];
+    setConversationHistory(updatedHistory);
+    localStorage.setItem("conversationHistory", JSON.stringify(updatedHistory));
 
     // Clear input field
     setInput("");
@@ -108,6 +131,10 @@ export default function QuestionInput({
     abortControllerRef.current = new AbortController();
 
     try {
+      // Prepare conversation context for the API
+      // Get the last few messages for context (limit to last 10 messages)
+      const recentMessages = conversationHistory.slice(-10);
+
       // Send request to our API route
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -117,6 +144,7 @@ export default function QuestionInput({
         body: JSON.stringify({
           prompt: userQuestion,
           mode: mode,
+          conversationHistory: recentMessages,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -143,7 +171,32 @@ export default function QuestionInput({
 
           // Update the response as it streams in
           setResponse(fullText);
-          localStorage.setItem("lastResponse", fullText);
+
+          // Update the assistant message in conversation history
+          const assistantMessage: Message = {
+            role: "assistant",
+            content: fullText,
+            timestamp: Date.now(),
+          };
+
+          // Find if there's already an assistant message for this response and update it,
+          // otherwise add a new one
+          const lastMessage = updatedHistory[updatedHistory.length - 1];
+          let newHistory;
+
+          if (lastMessage && lastMessage.role === "assistant") {
+            // Update the last assistant message
+            newHistory = [...updatedHistory.slice(0, -1), assistantMessage];
+          } else {
+            // Add a new assistant message
+            newHistory = [...updatedHistory, assistantMessage];
+          }
+
+          setConversationHistory(newHistory);
+          localStorage.setItem(
+            "conversationHistory",
+            JSON.stringify(newHistory)
+          );
         }
       }
 
@@ -158,10 +211,6 @@ export default function QuestionInput({
         setResponse(
           "The void is silent tonight. Try again when the stars align."
         );
-        localStorage.setItem(
-          "lastResponse",
-          "The void is silent tonight. Try again when the stars align."
-        );
       }
     } finally {
       setIsSubmitting(false);
@@ -170,20 +219,71 @@ export default function QuestionInput({
     }
   };
 
+  // Different styles based on whether the input is centered or at the bottom
+  if (isCentered) {
+    return (
+      <form onSubmit={handleSubmit} className="w-full">
+        <div className="relative border-b border-gray-800 overflow-hidden transition-all duration-300">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={getPlaceholder()}
+            className="w-full bg-transparent py-3 px-4 pr-12 text-white placeholder-gray-600 focus:outline-none resize-none h-[50px] text-lg"
+            disabled={isSubmitting}
+            rows={2}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (input.trim() && !isSubmitting) {
+                  handleSubmit(e as unknown as React.FormEvent);
+                }
+              }
+            }}
+            style={{ overflowY: "auto" }}
+          />
+          <button
+            type="submit"
+            className="absolute right-2 bottom-2 p-2 rounded-full text-gray-500 hover:text-white transition-colors disabled:opacity-50"
+            disabled={!input.trim() || isSubmitting}
+          >
+            {isSubmitting ? (
+              <div className="h-6 w-6 border-t-2 border-r-2 border-white rounded-full animate-spin" />
+            ) : (
+              <Send className="h-6 w-6" />
+            )}
+          </button>
+        </div>
+        <div className="text-xs text-gray-600 mt-3 text-center">
+          Press Enter to send, Shift+Enter for new line
+        </div>
+      </form>
+    );
+  }
+
+  // Regular bottom-aligned input
   return (
-    <form onSubmit={handleSubmit} className="w-full mb-8">
-      <div className="relative">
-        <input
-          type="text"
+    <form onSubmit={handleSubmit} className="w-full">
+      <div className="relative border-t border-gray-800 overflow-hidden">
+        <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={getPlaceholder()}
-          className="w-full bg-transparent border-b border-gray-800 py-4 px-2 text-white placeholder-gray-700 focus:outline-none focus:border-gray-500 transition-colors"
+          className="w-full bg-transparent py-2 px-4 pr-12 text-white placeholder-gray-600 focus:outline-none resize-none min-h-[50px] max-h-[120px]"
           disabled={isSubmitting}
+          rows={1}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              if (input.trim() && !isSubmitting) {
+                handleSubmit(e as unknown as React.FormEvent);
+              }
+            }
+          }}
+          style={{ overflowY: "auto" }}
         />
         <button
           type="submit"
-          className="absolute right-2 top-4 text-gray-500 hover:text-white transition-colors disabled:opacity-50"
+          className="absolute right-2 bottom-2 p-2 rounded-full text-gray-500 hover:text-white transition-colors disabled:opacity-50"
           disabled={!input.trim() || isSubmitting}
         >
           {isSubmitting ? (
@@ -192,6 +292,9 @@ export default function QuestionInput({
             <Send className="h-5 w-5" />
           )}
         </button>
+      </div>
+      <div className="text-xs text-gray-600 mt-2 text-center">
+        Press Enter to send, Shift+Enter for new line
       </div>
     </form>
   );
