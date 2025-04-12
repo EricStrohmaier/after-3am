@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 0, 0, 0;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  overflow-x: hidden;
+}
+
+/* Custom cursor */
+* {
+  cursor: default;
+}
+
+input,
+button {
+  cursor: pointer;
+}
+
+/* Subtle grain effect */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Vaporwave-inspired glow */
+h1,
+h2,
+h3 {
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+/* Subtle animation for the background */
+@keyframes subtlePulse {
+  0% {
+    background-color: rgba(0, 0, 0, 1);
+  }
+  50% {
+    background-color: rgba(5, 0, 10, 1);
+  }
+  100% {
+    background-color: rgba(0, 0, 0, 1);
+  }
+}
+
+body {
+  animation: subtlePulse 20s ease-in-out infinite;
+}
+
+/* Dreamy text glow effect */
+.text-xl {
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Subtle floating animation for UI elements */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+h1 {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Vignette effect */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, transparent 50%, rgba(0, 0, 0, 0.8) 150%);
+  pointer-events: none;
+  z-index: 2;
+}
