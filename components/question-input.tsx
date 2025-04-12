@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef } from "react"
-import { Send } from "lucide-react"
+import { useState, useRef } from "react";
+import { Send } from "lucide-react";
 
 // Mode-specific placeholder text
 const PLACEHOLDERS = {
@@ -14,7 +14,7 @@ const PLACEHOLDERS = {
   story: "Start a strange story...",
   dream: "Describe your ordinary day...",
   default: "Ask anything...",
-}
+};
 
 // Mode-specific prompts for the 3AM Prompts mode
 const RANDOM_PROMPTS = [
@@ -28,62 +28,84 @@ const RANDOM_PROMPTS = [
   "If you could taste a sound, which would be the most delicious?",
   "What's something you've never told anyone because it sounds too strange?",
   "If you could speak to your house when no one else is home, what would you ask it?",
-]
+];
 
 interface QuestionInputProps {
-  mode: string
-  setQuestion: (question: string) => void
-  setResponse: (response: string) => void
-  setIsTyping: (isTyping: boolean) => void
+  mode: string;
+  setQuestion: (question: string) => void;
+  setResponse: (response: string) => void;
+  setIsTyping: (isTyping: boolean) => void;
 }
 
-export default function QuestionInput({ mode, setQuestion, setResponse, setIsTyping }: QuestionInputProps) {
-  const [input, setInput] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [currentPrompt, setCurrentPrompt] = useState("")
-  const abortControllerRef = useRef<AbortController | null>(null)
+export default function QuestionInput({
+  mode,
+  setQuestion,
+  setResponse,
+  setIsTyping,
+}: QuestionInputProps) {
+  const [input, setInput] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPrompt, setCurrentPrompt] = useState("");
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Set a random prompt for the 3AM Prompts mode
   if (mode === "prompt" && currentPrompt === "") {
-    const randomIndex = Math.floor(Math.random() * RANDOM_PROMPTS.length)
-    setCurrentPrompt(RANDOM_PROMPTS[randomIndex])
+    const randomIndex = Math.floor(Math.random() * RANDOM_PROMPTS.length);
+    setCurrentPrompt(RANDOM_PROMPTS[randomIndex]);
   }
 
   // Reset the prompt when changing modes
   if (mode !== "prompt" && currentPrompt !== "") {
-    setCurrentPrompt("")
+    setCurrentPrompt("");
   }
 
   const getPlaceholder = () => {
     if (mode === "prompt" && currentPrompt) {
-      return currentPrompt
+      return currentPrompt;
     }
-    return PLACEHOLDERS[mode as keyof typeof PLACEHOLDERS] || PLACEHOLDERS.default
-  }
+    return (
+      PLACEHOLDERS[mode as keyof typeof PLACEHOLDERS] || PLACEHOLDERS.default
+    );
+  };
+
+  // Parse the streaming response format
+  const parseStreamingResponse = (chunk: string): string => {
+    // Extract only the text content from the streaming format
+    // The format is typically: f:{...} 0:"text" 0:"more text" ... e:{...}
+    const textChunks = chunk.match(/0:"([^"]*)"/g) || [];
+    return textChunks
+      .map((match) => {
+        // Extract the text between quotes after 0:"
+        const content = match.substring(3, match.length - 1);
+        // Remove escape characters (backslashes)
+        return content.replace(/\\/g, "");
+      })
+      .join("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!input.trim() || isSubmitting) return
+    if (!input.trim() || isSubmitting) return;
 
-    setIsSubmitting(true)
-    setIsTyping(true)
+    setIsSubmitting(true);
+    setIsTyping(true);
 
     // Store the question
-    const userQuestion = input
-    setQuestion(userQuestion)
-    localStorage.setItem("lastQuestion", userQuestion)
+    const userQuestion = input;
+    setQuestion(userQuestion);
+    localStorage.setItem("lastQuestion", userQuestion);
 
     // Clear input field
-    setInput("")
+    setInput("");
 
     // Cancel any ongoing requests
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
+      abortControllerRef.current.abort();
     }
 
     // Create a new AbortController
-    abortControllerRef.current = new AbortController()
+    abortControllerRef.current = new AbortController();
 
     try {
       // Send request to our API route
@@ -97,48 +119,56 @@ export default function QuestionInput({ mode, setQuestion, setResponse, setIsTyp
           mode: mode,
         }),
         signal: abortControllerRef.current.signal,
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       // Handle streaming response
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-      let responseText = ""
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
 
       if (reader) {
         while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
+          const { done, value } = await reader.read();
+          if (done) break;
 
-          const chunk = decoder.decode(value, { stream: true })
-          responseText += chunk
+          const chunk = decoder.decode(value, { stream: true });
+
+          // Parse the streaming format to extract just the text
+          const parsedText = parseStreamingResponse(chunk);
+          fullText += parsedText;
 
           // Update the response as it streams in
-          setResponse(responseText)
-          localStorage.setItem("lastResponse", responseText)
+          setResponse(fullText);
+          localStorage.setItem("lastResponse", fullText);
         }
       }
 
       // If it's the prompt mode, set a new random prompt
       if (mode === "prompt") {
-        const randomIndex = Math.floor(Math.random() * RANDOM_PROMPTS.length)
-        setCurrentPrompt(RANDOM_PROMPTS[randomIndex])
+        const randomIndex = Math.floor(Math.random() * RANDOM_PROMPTS.length);
+        setCurrentPrompt(RANDOM_PROMPTS[randomIndex]);
       }
     } catch (error) {
       if ((error as Error).name !== "AbortError") {
-        console.error("Error fetching response:", error)
-        setResponse("The void is silent tonight. Try again when the stars align.")
-        localStorage.setItem("lastResponse", "The void is silent tonight. Try again when the stars align.")
+        console.error("Error fetching response:", error);
+        setResponse(
+          "The void is silent tonight. Try again when the stars align."
+        );
+        localStorage.setItem(
+          "lastResponse",
+          "The void is silent tonight. Try again when the stars align."
+        );
       }
     } finally {
-      setIsSubmitting(false)
-      setIsTyping(false)
-      abortControllerRef.current = null
+      setIsSubmitting(false);
+      setIsTyping(false);
+      abortControllerRef.current = null;
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="w-full mb-8">
@@ -164,5 +194,5 @@ export default function QuestionInput({ mode, setQuestion, setResponse, setIsTyp
         </button>
       </div>
     </form>
-  )
+  );
 }

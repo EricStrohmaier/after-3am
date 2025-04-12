@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     const systemPrompt = systemPrompts[mode as keyof typeof systemPrompts] || systemPrompts.default
 
     // Stream the response from OpenAI
-    const response = streamText({
+    const result = streamText({
       model: openai("gpt-4o"),
       system: systemPrompt,
       prompt,
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     })
 
     // Return the streaming response
-    return response.toDataStreamResponse()
+    return result.toDataStreamResponse()
   } catch (error) {
     console.error("Error in chat API:", error)
     return NextResponse.json({ error: "Failed to generate response" }, { status: 500 })
