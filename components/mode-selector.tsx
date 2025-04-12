@@ -29,10 +29,10 @@ export default function ModeSelector({ currentMode, setMode }: ModeSelectorProps
   }
 
   return (
-    <div className="relative mb-8 w-full max-w-xs">
+    <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full px-4 py-2 bg-gray-900/50 border border-gray-800 rounded-md text-left text-sm"
+        className="flex items-center justify-between px-3 py-2 bg-transparent text-gray-400 hover:text-white rounded-md text-left text-sm"
       >
         <div className="flex items-center gap-2">
           {currentModeData.icon}

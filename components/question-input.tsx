@@ -228,7 +228,7 @@ export default function QuestionInput({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={getPlaceholder()}
-            className="w-full bg-transparent py-3 px-4 pr-12 text-white placeholder-gray-600 focus:outline-none resize-none h-[50px] text-lg"
+            className="w-full bg-transparent py-3 px-4 pr-12 text-white placeholder-gray-400 focus:outline-none resize-none h-[50px] text-lg"
             disabled={isSubmitting}
             rows={2}
             onKeyDown={(e) => {
@@ -268,7 +268,7 @@ export default function QuestionInput({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={getPlaceholder()}
-          className="w-full bg-transparent py-2 px-4 pr-12 text-white placeholder-gray-600 focus:outline-none resize-none min-h-[50px] max-h-[120px]"
+          className="w-full bg-transparent py-2 px-4 pr-12 text-white placeholder-gray-400 focus:outline-none resize-none min-h-[50px] max-h-[120px]"
           disabled={isSubmitting}
           rows={1}
           onKeyDown={(e) => {

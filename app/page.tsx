@@ -142,14 +142,17 @@ export default function Home() {
                 <h1 className="text-xl font-light opacity-70">
                   Ask Me After 3AM
                 </h1>
-                <div className="flex items- space-x-4">
-                  <button
-                    onClick={startNewConversation}
-                    className="px-3 py-1 text-sm rounded-md bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
-                  >
-                    <RefreshCcw className="h- w-4" />
-                  </button>
-                  <ModeSelector currentMode={mode} setMode={setMode} />
+                <div className="flex items-center">
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={startNewConversation}
+                      className="p-2 text-gray-500 hover:text-white transition-colors"
+                      aria-label="New Conversation"
+                    >
+                      <RefreshCcw className="h-4 w-4" />
+                    </button>
+                    <ModeSelector currentMode={mode} setMode={setMode} />
+                  </div>
                 </div>
               </div>
 
@@ -163,7 +166,7 @@ export default function Home() {
               </div>
 
               {/* Input area - fixed at the bottom */}
-              <div className="border-t border-gray-800 p-4">
+              <div className=" p-4">
                 <QuestionInput
                   mode={mode}
                   setQuestion={setQuestion}
