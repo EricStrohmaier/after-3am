@@ -166,7 +166,7 @@ export default function Home() {
               </div>
 
               {/* Input area - fixed at the bottom */}
-              <div className=" p-4">
+              <div className="p-4">
                 <QuestionInput
                   mode={mode}
                   setQuestion={setQuestion}

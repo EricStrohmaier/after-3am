@@ -7,14 +7,13 @@ export const metadata: Metadata = {
   description: "Ask surreal, dreamlike responses after 3AM",
   keywords: ["3AM", "After 3AM", "Surreal", "Dreamlike", "Insomniac", "AI"],
   openGraph: {
+    images: ["/icon.png"],
     title: "Ask Me After 3AM",
     description: "Ask surreal, dreamlike responses after 3AM",
     type: "website",
   },
-  twitter: {
-    title: "Ask Me After 3AM",
-    description: "Ask surreal, dreamlike responses after 3AM",
-    card: "summary_large_image",
+  icons: {
+    icon: "/icon.png",
   },
 };
 
@@ -26,9 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AudioProvider>
-          {children}
-        </AudioProvider>
+        <AudioProvider>{children}</AudioProvider>
       </body>
     </html>
   );

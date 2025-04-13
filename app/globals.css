@@ -41,7 +41,7 @@ body::before {
 h1,
 h2,
 h3 {
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+  text-shadow: 0 0 5px #ffffff33;
 }
 
 /* Subtle animation for the background */
